@@ -1,3 +1,8 @@
+
+
+
+# XXX Refactoring for my own use. do not use this repository. use https://github.com/stackforge/puppet-openstack
+
 # The Openstack modules:
 
 ## Introduction
