@@ -127,9 +127,9 @@ node /openstack_controller/ {
   class { 'openstack::nova::controller':
     verbose                 => $verbose,
     db_host                 => '127.0.0.1',
-    public_address          => $public_address,
-    public_interface        => $public_interface,
-    private_interface       => $private_interface,
+    public_address          => $ipaddress,
+    public_interface        => $interface,
+    private_interface       => $interface,
 
     quantum_user_password   => $quantum_user_password,
     metadata_shared_secret  => $metadata_shared_secret,
@@ -161,18 +161,19 @@ node /openstack_controller/ {
   }
 
   class { 'quantum::plugins::linuxbridge':
-    sql_connection      => $sql_connection,
+    sql_connection      => "mysql://quantum:${quantum_db_password}@localhost/quantum?charset=utf8",
     tenant_network_type => 'local',
+    network_vlan_ranges => '',
   }
 
   class { 'quantum::agents::linuxbridge':
-    # $physical_interface_mappings => 'default:eth1' # XXX ????
+    physical_interface_mappings => 'default:eth1', # XXX ????
     # $firewall_driver = 'quantum.agent.linux.iptables_firewall.IptablesFirewallDriver',
   }
 
   class { 'quantum::agents::dhcp':
     debug => $verbose,
-    interface_driver = 'quantum.agent.linux.interface.BridgeInterfaceDriver',
+    interface_driver => 'quantum.agent.linux.interface.BridgeInterfaceDriver',
     use_namespaces => false,
   }
 
@@ -182,14 +183,13 @@ node /openstack_controller/ {
     auth_password  => $quantum_user_password,
     shared_secret  => $metadata_shared_secret,
     auth_url       => $auth_url,
-    metadata_ip    => $metadata_ip,
     auth_region    => $region,
     metadata_ip    => $controller_address,
   }
   # etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini XXX ?????
 
   class { 'openstack::cinder::controller':
-    verbose            => $verbose
+    verbose            => $verbose,
     keystone_password  => $cinder_user_password,
     rabbit_userid      => $rabbit_user,
     rabbit_password    => $rabbit_password,
@@ -213,9 +213,9 @@ node /openstack_controller/ {
 # that is what nova-conductor is for!!!
 node /openstack_compute/ {
   class { 'openstack::compute':
-    public_interface   => $public_interface,
-    private_interface  => $private_interface,
-    internal_address   => $public_address, # ?????????????
+    public_interface   => $interface,
+    private_interface  => $interface,
+    internal_address   => $ipaddress,
     libvirt_type       => 'kvm',
     fixed_range        => $fixed_network_range,
     network_manager    => 'nova.network.manager.FlatDHCPManager',
