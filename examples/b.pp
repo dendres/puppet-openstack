@@ -55,7 +55,6 @@ $cinder_db_password      = 'cinder_pass'
 $cinder_user_password    = 'cinder_pass'
 $glance_db_password      = 'glance_pass'
 $glance_user_password    = 'glance_pass'
-$glance_api_servers      = "${controller_address}:9292"
 $nova_admin_tenant_name  = 'services'
 $nova_db_password        = 'nova_pass'
 $nova_user_password      = 'nova_pass'
@@ -64,7 +63,6 @@ $nova_cluster_id         = 'localcluster'
 $quantum_db_password     = 'quantum_pass'
 $quantum_user_password   = 'quantum_pass'
 $metadata_shared_secret  = 'metadata_shared_secret'
-$rabbit_host             = $controller_address
 $rabbit_virtual_host     = '/'
 $rabbit_user             = 'openstack_rabbit_user'
 $rabbit_password         = 'openstack_rabbit_password'
@@ -201,7 +199,7 @@ node /openstack_controller/ {
     keystone_password  => $cinder_user_password,
     rabbit_userid      => $rabbit_user,
     rabbit_password    => $rabbit_password,
-    rabbit_host        => $controller_address,
+    rabbit_host        => '127.0.0.1',
     db_user            => $cinder_db_user,
     db_password        => $cinder_db_password,
   }
@@ -238,7 +236,7 @@ node /openstack_compute/ {
     verbose             => $verbose,
     # debug               => $verbose,
     nova_cluster_id     => $nova_cluster_id,
-    glance_api_servers  => $glance_api_servers,
+    glance_api_servers  => "${controller_address}:9292",
     rabbit_host         => $controller_address,
     rabbit_virtual_host => $rabbit_virtual_host,
     rabbit_userid       => $rabbit_user,
