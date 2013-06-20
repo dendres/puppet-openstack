@@ -194,6 +194,7 @@ node /openstack_controller/ {
   }
   # etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini XXX ?????
 
+  # XXX break this up!!
   class { 'openstack::cinder::controller':
     verbose            => $verbose,
     keystone_password  => $cinder_user_password,
@@ -204,9 +205,14 @@ node /openstack_controller/ {
     db_password        => $cinder_db_password,
   }
 
-  class { 'openstack::horizon':
-    # django_debug => $verbose,
-    secret_key   => $horizon_secret_key,
+  class { 'memcached':
+    listen_ip => '127.0.0.1',
+  }
+
+  class { '::horizon':
+    quantum          => false,
+    secret_key       => $horizon_secret_key,
+    django_debug     => 'True',
   }
 }
 
@@ -215,7 +221,8 @@ node /openstack_controller/ {
 
 
 
-# nothing in compute should need mysql database access!!! 
+
+# nothing in compute should need mysql database access!!!
 # that is what nova-conductor is for!!!
 node /openstack_compute/ {
 
