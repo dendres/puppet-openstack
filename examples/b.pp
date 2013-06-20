@@ -163,7 +163,7 @@ node /openstack_controller/ {
   class { 'quantum::server':
     auth_tenant => $nova_admin_tenant_name,
     auth_password => $quantum_user_password,
-    log_file => 'ssssserver.log'
+    log_file => '/var/log/quantum/ssssserver.log'
   }
 
   class { 'quantum::plugins::linuxbridge':
