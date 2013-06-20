@@ -9,9 +9,6 @@
 # - NO: quantum-l3, quantum-lbaas, ovs, swift
 #
 
-# reference:
-# https://github.com/mseknibilel/OpenStack-Grizzly-Install-Guide/blob/OVS_MultiNode/OpenStack_Grizzly_Install_Guide.rst
-
 #
 # make br100 usinb bridge-utils ????
 # set promiscuous mode on the bridged adapter
@@ -23,14 +20,18 @@
 #   up ifconfig $IFACE promisc
 #
 # create cinder-volumes LVM volume group
-# parted /dev/sdb mkpart prmary 1 100%
+# parted /dev/sdb mkpart primary 1 100%
 # vgcreate cinder-volumes /dev/sdb1
 #
 # apt-get install puppet rake git
 # puppet module install puppetlabs-firewall
+# gem install bundler
 #
+# git clone into /etc/puppet/modules/openstack
 # cd /etc/puppet/modules/openstack
-# rake modules:clone
+# bundle install --path=vendor/bundle
+# bundle exec rake -T
+# bundle exec rake modules:clone
 # puppet apply --modulepath /etc/puppet/modules site.pp --certname openstack_controller
 # puppet apply --modulepath /etc/puppet/modules site.pp --certname openstack_compute
 #
@@ -40,7 +41,7 @@
 $interface               = 'em1'
 
 # the compute node will need to know which host is the controller:
-$controller_address      = '10.10.12.14'
+$controller_address      = '10.10.12.15'
 
 $verbose                 = true
 $region                  = 'RegionOne'
