@@ -9,6 +9,9 @@
 # - NO: quantum-l3, quantum-lbaas, ovs, swift
 #
 
+# reference:
+# https://github.com/mseknibilel/OpenStack-Grizzly-Install-Guide/blob/OVS_MultiNode/OpenStack_Grizzly_Install_Guide.rst
+
 #
 # make br100 usinb bridge-utils ????
 # set promiscuous mode on the bridged adapter
@@ -37,7 +40,7 @@
 $interface               = 'em1'
 
 # the compute node will need to know which host is the controller:
-$controller_address      = '10.10.12.15'
+$controller_address      = '10.10.12.14'
 
 $verbose                 = true
 $region                  = 'RegionOne'
@@ -149,7 +152,7 @@ node /openstack_controller/ {
 
   class { '::quantum':
     verbose               => $verbose,
-    debug                 => $verbose,
+    # debug                 => $verbose,
     core_plugin => 'quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2',
     allow_overlapping_ips => true,
     rabbit_user           => $rabbit_user,
@@ -175,13 +178,13 @@ node /openstack_controller/ {
   }
 
   class { 'quantum::agents::dhcp':
-    debug => $verbose,
+    # debug => $verbose,
     interface_driver => 'quantum.agent.linux.interface.BridgeInterfaceDriver',
     use_namespaces => false,
   }
 
   class { 'quantum::agents::metadata':
-    debug          => $verbose,
+    # debug          => $verbose,
     auth_tenant    => $nova_admin_tenant_name,
     auth_password  => $quantum_user_password,
     shared_secret  => $metadata_shared_secret,
@@ -202,7 +205,7 @@ node /openstack_controller/ {
   }
 
   class { 'openstack::horizon':
-    django_debug => $verbose,
+    # django_debug => $verbose,
     secret_key   => $horizon_secret_key,
   }
 }
@@ -216,88 +219,6 @@ node /openstack_controller/ {
 # that is what nova-conductor is for!!!
 node /openstack_compute/ {
 
-    public_interface   => $interface,
-    private_interface  => $interface,
-    internal_address   => $ipaddress,
-    libvirt_type       => 'kvm',
-    fixed_range        => $fixed_network_range,
-    network_manager    => 'nova.network.manager.FlatDHCPManager',
-    multi_host         => true,
-    nova_db_password   => $nova_db_password,
-    nova_user_password => $nova_user_password,
-    quantum_user_password   => $quantum_user_password,
-    cinder_db_password      => $cinder_db_password,
-    rabbit_host        => $controller_address,
-    rabbit_password    => $rabbit_password,
-    rabbit_user        => $rabbit_user,
-
-    vncproxy_host      => $controller_address,
-    vnc_enabled        => true,
-    verbose            => $verbose,
-    manage_volumes     => true,
-    volume_group       => 'cinder-volumes'
-
-  # Required Network
-  $internal_address,
-  # Required Nova
-  $nova_user_password,
-  # Required Rabbit
-  $rabbit_password,
-  # DB
-  $nova_db_password,
-  $db_host                       = '127.0.0.1',
-  # Nova Database
-  $nova_db_user                  = 'nova',
-  $nova_db_name                  = 'nova',
-  # Network
-  $public_interface              = undef,
-  $private_interface             = undef,
-  $fixed_range                   = undef,
-  $network_manager               = 'nova.network.manager.FlatDHCPManager',
-  $network_config                = {},
-  $multi_host                    = false,
-  $enabled_apis                  = 'ec2,osapi_compute,metadata',
-  # Quantum
-  $quantum                       = true,
-  $quantum_user_password         = false,
-  $quantum_admin_tenant_name     = 'services',
-  $quantum_admin_user            = 'quantum',
-  $enable_ovs_agent              = true,
-  $enable_l3_agent               = false,
-  $enable_dhcp_agent             = false,
-  $quantum_auth_url              = "http://127.0.0.1:35357/v2.0",
-  $keystone_host                 = '127.0.0.1',
-  $quantum_host                  = '127.0.0.1',
-  $ovs_local_ip                  = false,
-  # Nova
-  $nova_admin_tenant_name        = 'services',
-  $nova_admin_user               = 'nova',
-  $purge_nova_config             = false,
-  $libvirt_vif_driver            = 'nova.virt.libvirt.vif.LibvirtGenericVIFDriver',
-  # Rabbit
-  $rabbit_host                   = '127.0.0.1',
-  $rabbit_user                   = 'openstack',
-  $rabbit_virtual_host           = '/',
-  # Glance
-  $glance_api_servers            = false,
-  # Virtualization
-  $libvirt_type                  = 'kvm',
-  # VNC
-  $vnc_enabled                   = true,
-  $vncproxy_host                 = undef,
-  $vncserver_listen              = false,
-  # cinder / volumes
-  $manage_volumes                = true,
-  $cinder_db_password            = false,
-  $cinder_db_user                = 'cinder',
-  $cinder_db_name                = 'cinder',
-  $volume_group                  = 'cinder-volumes',
-  $iscsi_ip_address              = '127.0.0.1',
-  $setup_test_volume             = false,
-  # General
-
-
-
   # resources { 'nova_config':
   #   purge => true,
   # }
@@ -307,7 +228,7 @@ node /openstack_compute/ {
 
   class { 'nova':
     verbose             => $verbose,
-    debug               => $verbose,
+    # debug               => $verbose,
     nova_cluster_id     => $nova_cluster_id,
     glance_api_servers  => $glance_api_servers,
     rabbit_host         => $controller_address,
@@ -328,74 +249,30 @@ node /openstack_compute/ {
     # migration_support => true,
   }
 
-  # XXX expand this out!!!
-  class { 'openstack::quantum':
-    # Database
-    db_host           => $db_host,
-    # Networking
-    ovs_local_ip      => $ovs_local_ip_real,
-    # Rabbit
-    rabbit_host       => $rabbit_host,
-    rabbit_user       => $rabbit_user,
-    rabbit_password   => $rabbit_password,
-    # Quantum OVS
-    enable_ovs_agent  => $enable_ovs_agent,
-    firewall_driver   => false,
-    # Quantum L3 Agent
-    enable_l3_agent   => $enable_l3_agent,
-    enable_dhcp_agent => $enable_dhcp_agent,
-    auth_url          => $quantum_auth_url,
-    user_password     => $quantum_user_password,
-    # Keystone
-    keystone_host     => $keystone_host,
-    # General
-    enabled           => $enabled,
-    enable_server     => false,
-    verbose           => $verbose,
-  }
-
   class { 'nova::compute::quantum':
-    libvirt_vif_driver => $libvirt_vif_driver,
+    libvirt_vif_driver => 'nova.virt.libvirt.vif.LibvirtGenericVIFDriver',
   }
 
-  # Configures nova.conf entries applicable to Quantum.
   class { 'nova::network::quantum':
     quantum_admin_password    => $quantum_user_password,
-    quantum_auth_strategy     => 'keystone',
-    quantum_url               => "http://${quantum_host}:9696",
-    quantum_admin_username    => $quantum_admin_user,
-    quantum_admin_tenant_name => $quantum_admin_tenant_name,
-    quantum_admin_auth_url    => "http://${keystone_host}:35357/v2.0",
+    quantum_admin_tenant_name => $nova_admin_tenant_name,
+    quantum_url               => "http://${controller_address}:9696",
+    quantum_admin_auth_url    => "http://${controller_address}:35357/v2.0",
   }
 
+  class { '::quantum':
+    verbose               => $verbose,
+    # debug                 => $verbose,
+    core_plugin => 'quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2',
+    allow_overlapping_ips => true,
+    rabbit_user           => $rabbit_user,
+    rabbit_password       => $rabbit_password,
+    rabbit_virtual_host   => $rabbit_virtual_host,
   }
 
-  if $manage_volumes {
-
-    if ! $cinder_db_password {
-      fail('cinder_db_password must be set when cinder is being configured')
-    }
-
-    $cinder_sql_connection = "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_name}"
-
-    class { 'openstack::cinder::storage':
-      sql_connection      => $cinder_sql_connection,
-      rabbit_password     => $rabbit_password,
-      rabbit_userid       => $rabbit_user,
-      rabbit_host         => $rabbit_host,
-      rabbit_virtual_host => $rabbit_virtual_host,
-      volume_group        => $volume_group,
-      iscsi_ip_address    => $iscsi_ip_address,
-      enabled             => $enabled,
-      verbose             => $verbose,
-      setup_test_volume   => $setup_test_volume,
-      volume_driver       => 'iscsi',
-    }
-
-    # set in nova::api
-    if ! defined(Nova_config['DEFAULT/volume_api_class']) {
-      nova_config { 'DEFAULT/volume_api_class': value => 'nova.volume.cinder.API' }
-    }
-  }
-
+  # XXX cinder something on compute node ????
 }
+
+
+
+
