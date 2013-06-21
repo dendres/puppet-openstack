@@ -209,9 +209,10 @@ node /openstack_controller/ {
     listen_ip => '127.0.0.1',
   }
 
-  file { '/var/run/memcached.pid':
+  file {
+    '/var/run/memcached.pid':
     ensure => present,
-    user => 'nobody',
+    owner => 'nobody',
     group => 'nobody',
   }
 
