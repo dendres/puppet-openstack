@@ -141,7 +141,7 @@ node /openstack_controller/ {
     nova_admin_tenant_name  => $nova_admin_tenant_name,
     nova_user_password      => $nova_user_password,
     nova_db_password        => $nova_db_password,
-    enabled_apis            => 'ec2,osapi_compute,metadata'
+    enabled_apis            => 'ec2,osapi_compute,metadata',
 
     rabbit_user             => $rabbit_user,
     rabbit_password         => $rabbit_password,
