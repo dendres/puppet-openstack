@@ -42,12 +42,13 @@ $interface               = 'em1'
 
 # the compute node will need to know which host is the controller:
 $controller_address      = '10.10.12.15'
+$fixed_network_range     = '10.10.14.0/24'
 
 $verbose                 = true
 $region                  = 'RegionOne'
 $mysql_root_password     = 'sql_pass'
-$admin_email             = 'root@localhost'  # 'admin' user in keystone
-$admin_password          = 'keystone_admin'
+$keystone_admin_email    = 'root@localhost'  # 'admin' user in keystone
+$keystone_admin_password = 'keystone_admin'
 $keystone_admin_tenant   = 'admin'
 $keystone_db_password    = 'keystone_db_pass'
 $keystone_admin_token    = 'keystone_admin_token'
@@ -58,7 +59,6 @@ $glance_user_password    = 'glance_pass'
 $nova_admin_tenant_name  = 'services'
 $nova_db_password        = 'nova_pass'
 $nova_user_password      = 'nova_pass'
-$nova_enabled_apis       = 'ec2,osapi_compute,metadata'
 $nova_cluster_id         = 'localcluster'
 $quantum_db_password     = 'quantum_pass'
 $quantum_user_password   = 'quantum_pass'
@@ -67,7 +67,6 @@ $rabbit_virtual_host     = '/'
 $rabbit_user             = 'openstack_rabbit_user'
 $rabbit_password         = 'openstack_rabbit_password'
 $horizon_secret_key      = 'horizon_secret_key'
-$fixed_network_range     = '10.10.14.0/24'
 $floating_network_range  = false
 $auto_assign_floating_ip = false
 
@@ -113,8 +112,8 @@ node /openstack_controller/ {
     db_password           => $keystone_db_password,
     admin_token           => $keystone_admin_token,
     admin_tenant          => $keystone_admin_tenant,
-    admin_email           => $admin_email,
-    admin_password        => $admin_password,
+    admin_email           => $keystone_admin_email,
+    admin_password        => $keystone_admin_password,
 
     cinder_user_password  => $cinder_user_password,
     glance_user_password  => $glance_user_password,
@@ -142,7 +141,7 @@ node /openstack_controller/ {
     nova_admin_tenant_name  => $nova_admin_tenant_name,
     nova_user_password      => $nova_user_password,
     nova_db_password        => $nova_db_password,
-    enabled_apis            => $nova_enabled_apis,
+    enabled_apis            => 'ec2,osapi_compute,metadata'
 
     rabbit_user             => $rabbit_user,
     rabbit_password         => $rabbit_password,
