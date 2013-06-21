@@ -205,21 +205,19 @@ node /openstack_controller/ {
     db_password        => $cinder_db_password,
   }
 
-  class { 'memcached':
-    listen_ip => '127.0.0.1',
-  }
-
-  file {
-    '/var/run/memcached.pid':
-    ensure => present,
-    owner => 'nobody',
-    group => 'nobody',
-  }
-
   class { '::horizon':
     quantum          => false,
     secret_key       => $horizon_secret_key,
     django_debug     => 'True',
+  }
+
+  class { 'memcached':
+    listen_ip => '127.0.0.1',
+  }
+
+  file { '/var/run/memcached.pid':
+    ensure => present,
+    owner => 'nobody',
   }
 }
 
