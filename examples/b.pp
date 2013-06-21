@@ -74,7 +74,7 @@ $auto_assign_floating_ip = false
 class { 'openstack::test_file': }
 
 class { 'openstack::auth_file':
-  admin_password       => $admin_password,
+  admin_password       => $keystone_admin_password,
   keystone_admin_token => $keystone_admin_token,
   controller_node      => $controller_node_internal,
 }
