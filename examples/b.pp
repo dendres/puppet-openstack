@@ -171,11 +171,6 @@ node /openstack_controller/ {
     network_vlan_ranges => '',
   }
 
-  class { 'quantum::agents::linuxbridge':
-    physical_interface_mappings => 'default:eth1', # XXX ????
-    # $firewall_driver = 'quantum.agent.linux.iptables_firewall.IptablesFirewallDriver',
-  }
-
   class { 'quantum::agents::dhcp':
     # debug => $verbose,
     interface_driver => 'quantum.agent.linux.interface.BridgeInterfaceDriver',
@@ -279,6 +274,11 @@ node /openstack_compute/ {
     rabbit_user           => $rabbit_user,
     rabbit_password       => $rabbit_password,
     rabbit_virtual_host   => $rabbit_virtual_host,
+  }
+
+  class { 'quantum::agents::linuxbridge':
+    physical_interface_mappings => 'default-network:em1', # XXX ????
+    # $firewall_driver = 'quantum.agent.linux.iptables_firewall.IptablesFirewallDriver',
   }
 
   # XXX cinder something on compute node ????
