@@ -271,6 +271,7 @@ node /openstack_compute/ {
     # debug                 => $verbose,
     core_plugin => 'quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2',
     allow_overlapping_ips => true,
+    rabbit_host           => $controller_address,
     rabbit_user           => $rabbit_user,
     rabbit_password       => $rabbit_password,
     rabbit_virtual_host   => $rabbit_virtual_host,
