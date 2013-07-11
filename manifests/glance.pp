@@ -14,6 +14,7 @@
 # [db_password] Password for glance DB. Required.
 # [db_host] Host where DB resides. Required.
 # [keystone_host] Host whre keystone is running. Optional. Defaults to '127.0.0.1'
+# [sql_idle_timeout] Timeout for SQL to reap connections. Optional. Defaults to '3600'
 # [db_type] Type of sql databse to use. Optional. Defaults to 'mysql'
 # [db_user] Name of glance DB user. Optional. Defaults to 'glance'
 # [db_name] Name of glance DB. Optional. Defaults to 'glance'
@@ -21,7 +22,8 @@
 # [swift_store_user] The Swift service user account. Defaults to false.
 # [swift_store_key]  The Swift service user password Defaults to false.
 # [swift_store_auth_addres] The URL where the Swift auth service lives. Defaults to "http://${keystone_host}:5000/v2.0/"
-# [verbose] Log verbosely. Optional. Defaults to 'False'
+# [verbose] Log verbosely. Optional. Defaults to false.
+# [debug] Log at a debug-level. Optional. Defaults to false.
 # [enabled] Used to indicate if the service should be active (true) or passive (false).
 #   Optional. Defaults to true
 #
@@ -38,14 +40,16 @@ class openstack::glance (
   $db_password,
   $db_host                  = '127.0.0.1',
   $keystone_host            = '127.0.0.1',
+  $sql_idle_timeout         = '3600',
   $db_type                  = 'mysql',
   $db_user                  = 'glance',
   $db_name                  = 'glance',
   $backend                  = 'file',
   $swift_store_user         = false,
   $swift_store_key          = false,
-  $swift_store_auth_address = "http://127.0.0.1:5000/v2.0/",
-  $verbose                  = 'False',
+  $swift_store_auth_address = 'http://127.0.0.1:5000/v2.0/',
+  $verbose                  = false,
+  $debug                    = false,
   $enabled                  = true
 ) {
 
@@ -59,7 +63,7 @@ class openstack::glance (
   # Install and configure glance-api
   class { 'glance::api':
     verbose           => $verbose,
-    debug             => $verbose,
+    debug             => $debug,
     auth_type         => 'keystone',
     auth_port         => '35357',
     auth_host         => $keystone_host,
@@ -67,13 +71,14 @@ class openstack::glance (
     keystone_user     => 'glance',
     keystone_password => $user_password,
     sql_connection    => $sql_connection,
+    sql_idle_timeout  => $sql_idle_timeout,
     enabled           => $enabled,
   }
 
   # Install and configure glance-registry
   class { 'glance::registry':
     verbose           => $verbose,
-    debug             => $verbose,
+    debug             => $debug,
     auth_host         => $keystone_host,
     auth_port         => '35357',
     auth_type         => 'keystone',
@@ -98,7 +103,7 @@ class openstack::glance (
       swift_store_user                    => $swift_store_user,
       swift_store_key                     => $swift_store_key,
       swift_store_auth_address            => $swift_store_auth_address,
-      swift_store_create_container_on_put => 'True',
+      swift_store_create_container_on_put => true,
     }
   } elsif($backend == 'file') {
   # Configure file storage backend

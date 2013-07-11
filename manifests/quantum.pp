@@ -86,6 +86,11 @@
 #   Host where rabbitmq is running.
 #   (optional) 127.0.0.1
 #
+# [rabbit_hosts]
+#   Enable/disable Qauntum to use rabbitmq mirrored queues.
+#   Specifies an array of clustered rabbitmq brokers.
+#   (optional) false
+#
 # [rabbit_virtual_host]
 #   Virtual host to use for rabbitmq.
 #   (optional) Defaults to '/'.
@@ -159,6 +164,7 @@ class openstack::quantum (
   # Rabbit Information
   $rabbit_user            = 'rabbit_user',
   $rabbit_host            = '127.0.0.1',
+  $rabbit_hosts           = false,
   $rabbit_virtual_host    = '/',
   # Database. Currently mysql is the only option.
   $db_type                = 'mysql',
@@ -177,6 +183,7 @@ class openstack::quantum (
     enabled             => $enabled,
     bind_host           => $bind_address,
     rabbit_host         => $rabbit_host,
+    rabbit_hosts        => $rabbit_hosts,
     rabbit_virtual_host => $rabbit_virtual_host,
     rabbit_user         => $rabbit_user,
     rabbit_password     => $rabbit_password,
@@ -222,21 +229,21 @@ class openstack::quantum (
     }
   }
   if $enable_l3_agent {
-    class {"quantum::agents::l3":
+    class { 'quantum::agents::l3':
       use_namespaces => true,
     }
   }
 
   if $enable_metadata_agent {
     if ! $shared_secret {
-      fail('Shared secret parameter must be set when using metadata agent')
+      fail('metadata_shared_secret parameter must be set when using metadata agent')
     }
     class { 'quantum::agents::metadata':
       auth_password  => $user_password,
       shared_secret  => $shared_secret,
       auth_url       => $auth_url,
       metadata_ip    => $metadata_ip,
-     }
-   }
+    }
+  }
 
 }

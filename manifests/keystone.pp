@@ -6,6 +6,7 @@
 # === Parameters
 #
 # [db_host] Host where DB resides. Optional. Defaults to 127.0.0.1..
+# [idle_timeout] Timeout to reap SQL connections. Optional. Defaults to '200'.
 # [keystone_db_password] Password for keystone DB. Required.
 # [keystone_admin_token]. Auth token for keystone admin. Required.
 # [admin_email] Email address of system admin. Required.
@@ -17,13 +18,17 @@
 # [keystone_db_user] Name of keystone db user. Optional. Defaults to  'keystone'
 # [keystone_db_dbname] Name of keystone DB. Optional. Defaults to  'keystone'
 # [keystone_admin_tenant] Name of keystone admin tenant. Optional. Defaults to  'admin'
-# [verbose] Log verbosely. Optional. Defaults to  'False'
+# [verbose] Log verbosely. Optional. Defaults to false.
+# [debug] Log at a debug-level. Optional. Defaults to false.
 # [bind_host] Address that keystone binds to. Optional. Defaults to  '0.0.0.0'
 # [internal_address] Internal address for keystone. Optional. Defaults to  $public_address
 # [admin_address] Keystone admin address. Optional. Defaults to  $internal_address
 # [glance] Set up glance endpoints and auth. Optional. Defaults to  true
 # [nova] Set up nova endpoints and auth. Optional. Defaults to  true
 # [swift] Set up swift endpoints and auth. Optional. Defaults to false
+# [swift_user_password]
+#   Auth password for swift.
+#   (Optional) Defaults to false.
 # [enabled] If the service is active (true) or passive (false).
 #   Optional. Defaults to  true
 #
@@ -49,12 +54,14 @@ class openstack::keystone (
   $quantum_user_password,
   $public_address,
   $db_host                  = '127.0.0.1',
+  $idle_timeout             = '200',
   $swift_user_password      = false,
   $db_type                  = 'mysql',
   $db_user                  = 'keystone',
   $db_name                  = 'keystone',
   $admin_tenant             = 'admin',
-  $verbose                  = 'False',
+  $verbose                  = false,
+  $debug                    = false,
   $bind_host                = '0.0.0.0',
   $region                   = 'RegionOne',
   $internal_address         = false,
@@ -179,8 +186,9 @@ class openstack::keystone (
 
   class { '::keystone':
     verbose        => $verbose,
-    debug          => $verbose,
+    debug          => $debug,
     bind_host      => $bind_host,
+    idle_timeout   => $idle_timeout,
     catalog_type   => 'sql',
     admin_token    => $admin_token,
     enabled        => $enabled,

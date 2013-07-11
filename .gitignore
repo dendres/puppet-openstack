@@ -5,3 +5,4 @@ spec/fixtures/manifests/*
 .vendor
 vendor
 Gemfile.lock
+pkg

@@ -63,6 +63,17 @@
 # [horizon_app_links]     array as in '[ ["Nagios","http://nagios_addr:port/path"],["Ganglia","http://ganglia_addr"] ]'
 # [enabled] Whether services should be enabled. This parameter can be used to
 #   implement services in active-passive modes for HA. Optional. Defaults to true.
+# [swift]
+#   Whether or not to configure keystone for swift authorization.
+#   (Optional). Defaults to false.
+#
+# [swift_user_password]
+#   Auth password for swift.
+#   (Optional) Defaults to false. Required if swift is set to true.
+#
+# [swift_public_address]
+#   The swift address used to populate the keystone service catalog.
+#   (optional). Defaults to false.
 #
 # === Examples
 #
@@ -101,6 +112,7 @@ class openstack::controller (
   $quantum_db_password     = false,
   $cinder_user_password    = false,
   $cinder_db_password      = false,
+  $swift_user_password     = false,
   # Database
   $db_host                 = '127.0.0.1',
   $db_type                 = 'mysql',
@@ -156,7 +168,7 @@ class openstack::controller (
   $vnc_enabled             = true,
   $vncproxy_host           = false,
   # General
-  $verbose                 = 'False',
+  $verbose                 = false,
   # cinder
   # if the cinder management components should be installed
   $cinder                  = true,
@@ -178,6 +190,9 @@ class openstack::controller (
   $quantum_auth_url        = 'http://127.0.0.1:35357/v2.0',
   $enable_quantum_server   = true,
   $ovs_local_ip            = false,
+  # swift
+  $swift                   = false,
+  $swift_public_address    = false,
   $enabled                 = true
 ) {
 
@@ -234,7 +249,7 @@ class openstack::controller (
       quantum                => $quantum,
       quantum_db_user        => $quantum_db_user,
       quantum_db_password    => $quantum_db_password,
-      quantum_db_dbname      => $quantum_db_dbname,
+      quantum_db_dbname      => $quantum_db_name,
       allowed_hosts          => $allowed_hosts,
       enabled                => $enabled,
     }
@@ -264,6 +279,9 @@ class openstack::controller (
     cinder_user_password  => $cinder_user_password,
     quantum               => $quantum,
     quantum_user_password => $quantum_user_password,
+    swift                 => $swift,
+    swift_user_password   => $swift_user_password,
+    swift_public_address  => $swift_public_address,
     enabled               => $enabled,
     bind_host             => $keystone_bind_address,
   }
@@ -332,8 +350,8 @@ class openstack::controller (
     # Glance
     glance_api_servers      => $glance_api_servers,
     # VNC
-    vnc_enabled            => $vnc_enabled,
-    vncproxy_host          => $vncproxy_host_real,
+    vnc_enabled             => $vnc_enabled,
+    vncproxy_host           => $vncproxy_host_real,
     # General
     verbose                 => $verbose,
     enabled                 => $enabled,
@@ -350,9 +368,9 @@ class openstack::controller (
       fail('quantum_db_password must be set when configuring quantum')
     }
 
-   if ! $bridge_interface {
-     fail('bridge_interface must be set when configuring quantum')
-   }
+    if ! $bridge_interface {
+      fail('bridge_interface must be set when configuring quantum')
+    }
 
     class { 'openstack::quantum':
       # Database

@@ -7,10 +7,11 @@ class openstack::swift::storage-node (
   $storage_mnt_base_dir = '/srv/node',
   $storage_devices      = ['1', '2'],
   $storage_weight       = 1,
-  $package_ensure       = 'present'
+  $package_ensure       = 'present',
+  $byte_size            = '1024',
 ) {
 
-  class { 'swift': 
+  class { 'swift':
     swift_hash_suffix => $swift_hash_suffix,
     package_ensure    => $package_ensure,
   }
@@ -24,6 +25,15 @@ class openstack::swift::storage-node (
         require      => Class['swift'],
       }
     }
+    # make xfs filesystem on physical disk and mount them
+    'disk': {
+      swift::storage::disk {$storage_devices:
+        mnt_base_dir  => $storage_mnt_base_dir,
+        byte_size     => $byte_size,
+      }
+    }
+    default: {
+    }
   }
 
   # install all swift storage servers together
@@ -33,15 +43,15 @@ class openstack::swift::storage-node (
 
   define device_endpoint ($swift_local_net_ip, $zone, $weight) {
     @@ring_object_device { "${swift_local_net_ip}:6000/${name}":
-      zone   => $swift_zone,
+      zone   => $zone,
       weight => $weight,
     }
     @@ring_container_device { "${swift_local_net_ip}:6001/${name}":
-      zone   => $swift_zone,
+      zone   => $zone,
       weight => $weight,
     }
     @@ring_account_device { "${swift_local_net_ip}:6002/${name}":
-      zone   => $swift_zone,
+      zone   => $zone,
       weight => $weight,
     }
   }
