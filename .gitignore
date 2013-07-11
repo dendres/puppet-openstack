@@ -1,6 +1,8 @@
 spec/fixtures/modules/*
 spec/fixtures/manifests/*
 *swp
+.bundle
 .vendor
+vendor
 Gemfile.lock
 pkg

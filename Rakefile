@@ -28,12 +28,9 @@ namespace :modules do
     repos_to_clone.each do |remote, local|
       outpath = File.join(modulepath, local)
       if File.exists?(outpath)
-        FileUtils.cd outpath
-        output = `git pull --rebase`
-        puts output
+        puts "skipping existing #{outpath}"
       else
-        output = `git clone #{remote} #{outpath}`
-        puts output
+        puts `git clone #{remote} #{outpath}`
       end
     end
     branches_to_checkout.each do |local, branch|
@@ -59,6 +56,32 @@ namespace :modules do
       end
     end
   end
+
+  desc 'pull --rebase all modules. clone if missing'
+  task :update do
+    repo_hash = YAML.load_file(File.join(File.dirname(__FILE__), repo_file))
+    repos = (repo_hash['repos'] || {})
+    modulepath = (repo_hash['modulepath'] || default_modulepath)
+    repos_to_clone = (repos['repo_paths'] || {})
+    branches_to_checkout = (repos['checkout_branches'] || {})
+    repos_to_clone.each do |remote, local|
+      outpath = File.join(modulepath, local)
+      puts outpath
+      if File.exists?(outpath)
+        if File.exists?(File.join(outpath, '.git'))
+          Dir.chdir(outpath) do
+            puts `git pull --rebase`
+          end
+        else
+          puts "#{outpath} is not a git repository. Skipping."
+        end
+      else
+        puts "cloning missing module #{local}"
+        puts `git clone #{remote} #{outpath}`
+      end
+    end
+  end
+
 end
 
 namespace :github do
