@@ -13,8 +13,10 @@
 # puppet module install puppetlabs-firewall
 # gem install bundler
 #
-# git clone into /etc/puppet/modules/openstack
-# cd /etc/puppet/modules/openstack
+# cd /etc/puppet/modules
+# git clone git@github.com:dendres/puppet-openstack.git
+# mv puppet-openstack openstack
+# cd openstack
 # bundle install --path=vendor/bundle
 # bundle exec rake -T
 # bundle exec rake modules:clone
