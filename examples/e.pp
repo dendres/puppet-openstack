@@ -32,7 +32,7 @@ $interface               = 'em1'
 $controller_address      = '10.10.12.15'
 $fixed_network_range     = '10.10.14.0/24'
 
-$enabled_apis            = 'ec2,osapi_compute,metadata',
+$enabled_apis            = 'ec2,osapi_compute,metadata'
 
 $verbose                 = true
 $debug                   = true
