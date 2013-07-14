@@ -38,25 +38,31 @@ $verbose                 = true
 $debug                   = true
 $region                  = 'RegionOne'
 $mysql_root_password     = 'sql_pass'
+$mysql_allowed_hosts     = '%'
+
+# pattern: ${service}_db_username = ${service}
+# XXX propagate this pattern!!!!
+
+
 $keystone_admin_email    = 'root@localhost'  # 'admin' user in keystone
-$keystone_admin_password = 'keystone_admin'
+$keystone_admin_password = 'keystone_pass'
 $keystone_admin_tenant   = 'admin'
 $keystone_db_password    = 'keystone_db_pass'
 $keystone_admin_token    = 'keystone_admin_token'
 
-$glance_db_password      = 'glance_pass'
-$glance_user_password    = 'glance_pass'
+$glance_db_password      = 'glance_db_pass'
+$glance_user_password    = 'glance_user_pass'
 
 $nova_admin_tenant_name  = 'services'
-$nova_db_password        = 'nova_pass'
-$nova_user_password      = 'nova_pass'
+$nova_db_password        = 'nova_db_pass'
+$nova_user_password      = 'nova_user_pass'
 $nova_cluster_id         = 'localcluster'
 
 $metadata_shared_secret  = 'metadata_shared_secret'
 
 $rabbit_virtual_host     = '/'
-$rabbit_user             = 'openstack_rabbit_user'
-$rabbit_password         = 'openstack_rabbit_password'
+$rabbit_user             = 'rabbit_user'
+$rabbit_password         = 'rabbit_password'
 
 $floating_network_range  = false
 $auto_assign_floating_ip = false
@@ -71,24 +77,32 @@ class { 'openstack::auth_file':
 }
 
 node /openstack_controller/ {
-    Class['openstack::db::mysql'] -> Class['openstack::keystone']
-    Class['openstack::db::mysql'] -> Class['openstack::nova::controller']
-    Class['openstack::db::mysql'] -> Class['openstack::glance']
-    Class['glance::db::mysql']    -> Class['glance::registry']
 
-    class { 'openstack::db::mysql':
-        mysql_bind_address     => '127.0.0.1',
-        mysql_account_security => true,
-        allowed_hosts          => '%',
-        mysql_root_password    => $mysql_root_password,
-        keystone_db_password   => $keystone_db_password,
-        glance_db_password     => $glance_db_password,
-        nova_db_password       => $nova_db_password,
-        cinder_db_password     => $cinder_db_password,
-        quantum_db_password    => $quantum_db_password,
+    class { 'memcached':
+        listen_ip => '127.0.0.1',
     }
 
+    file { '/var/run/memcached.pid':
+        ensure => present,
+        owner => 'nobody',
+    }
+
+    class { 'mysql::server':
+        config_hash => {
+            'root_password' => $mysql_root_password,
+            'bind_address'  => '127.0.0.1',
+        }
+    }
+
+    class { 'mysql::server::account_security': }
+
     $keystone_sql_conn = "mysql://keystone:${keystone_db_password}@localhost/keystone"
+
+    class { 'keystone::db::mysql':
+        user          => 'keystone', # default = keystone_admin ?
+        password      => $keystone_db_password,
+        allowed_hosts => $mysql_allowed_hosts,
+    }
 
     class { '::keystone':
         verbose        => $verbose,
@@ -110,33 +124,21 @@ node /openstack_controller/ {
         region           => $region,
     }
 
+    $glance_sql_conn = "mysql://glance:${glance_db_password}@localhost/glance"
+
+    Class['glance::db::mysql'] -> Class['glance::registry']
+
+    class { 'glance::db::mysql':
+        password      => $glance_db_password,
+        allowed_hosts => $mysql_allowed_hosts,
+    }
+
     class { 'glance::keystone::auth':
         password         => $glance_user_password,
         public_address   => $ipaddress,
         admin_address    => $ipaddress,
         internal_address => $ipaddress,
         region           => $region,
-    }
-
-    class { 'nova::keystone::auth':
-        password         => $nova_user_password,
-        public_address   => $ipaddress,
-        admin_address    => $ipaddress,
-        internal_address => $ipaddress,
-        region           => $region,
-        cinder           => false,
-    }
-
-    $glance_sql_conn = "mysql://glance:${glance_db_password}@localhost/glance"
-
-    class { 'glance::api':
-        verbose           => $verbose,
-        debug             => $debug,
-        auth_host         => '127.0.0.1',
-        keystone_tenant   => $nova_admin_tenant_name,
-        keystone_user     => 'glance',
-        keystone_password => $glance_user_password,
-        sql_connection    => $glance_sql_conn,
     }
 
     class { 'glance::registry':
@@ -153,13 +155,37 @@ node /openstack_controller/ {
         filesystem_store_datadir => '/var/lib/glance/images/'
     }
 
+    class { 'glance::api':
+        verbose           => $verbose,
+        debug             => $debug,
+        auth_host         => '127.0.0.1',
+        keystone_tenant   => $nova_admin_tenant_name,
+        keystone_user     => 'glance',
+        keystone_password => $glance_user_password,
+        sql_connection    => $glance_sql_conn,
+    }
+
+    $nova_sql_conn = "mysql://nova:${nova_db_password}@localhost/nova"
+
+    class { 'nova::db::mysql':
+      password      => $nova_db_password,
+      allowed_hosts => $mysql_allowed_hosts,
+    }
+
     class { 'nova::rabbitmq':
         userid        => $rabbit_user,
         password      => $rabbit_password,
         virtual_host  => $rabbit_virtual_host,
     }
 
-    $nova_sql_conn = "mysql://nova:${nova_db_password}@localhost/nova"
+    class { 'nova::keystone::auth':
+        password         => $nova_user_password,
+        public_address   => $ipaddress,
+        admin_address    => $ipaddress,
+        internal_address => $ipaddress,
+        region           => $region,
+        cinder           => false,
+    }
 
     class { 'nova':
         verbose              => $verbose,
@@ -203,15 +229,6 @@ node /openstack_controller/ {
         host    => $controller_address,
         enabled => true,
     }
-
-    class { 'memcached':
-        listen_ip => '127.0.0.1',
-    }
-
-    file { '/var/run/memcached.pid':
-        ensure => present,
-        owner => 'nobody',
-    }
 }
 
 node /openstack_compute/ {
@@ -239,8 +256,6 @@ node /openstack_compute/ {
         # migration_support => true,
     }
 }
-
-
 
 
 
