@@ -43,21 +43,22 @@ $mysql_allowed_hosts     = '%'
 # pattern: ${service}_db_username = ${service}
 # XXX propagate this pattern!!!!
 
+$admin_tenant            = 'admin'
+$services_tenant         = 'services'
 
 $keystone_admin_email    = 'root@localhost'  # 'admin' user in keystone
 $keystone_admin_password = 'keystone_pass'
-$keystone_admin_tenant   = 'admin'
+
 $keystone_db_password    = 'keystone_db_pass'
 $keystone_admin_token    = 'keystone_admin_token'
 
 $glance_db_password      = 'glance_db_pass'
 $glance_user_password    = 'glance_user_pass'
 
-$nova_admin_tenant_name  = 'services'
 $nova_db_password        = 'nova_db_pass'
 $nova_user_password      = 'nova_user_pass'
-$nova_cluster_id         = 'localcluster'
 
+$nova_cluster_id         = 'test_e_cluster'
 $metadata_shared_secret  = 'metadata_shared_secret'
 
 $rabbit_virtual_host     = '/'
@@ -114,7 +115,7 @@ node /openstack_controller/ {
     class { 'keystone::roles::admin':
         email        => $keystone_admin_email,
         password     => $keystone_admin_password,
-        admin_tenant => $keystone_admin_tenant,
+        admin_tenant => $admin_tenant,
     }
 
     class { 'keystone::endpoint':
@@ -145,7 +146,7 @@ node /openstack_controller/ {
         verbose           => $verbose,
         debug             => $debug,
         auth_host         => '127.0.0.1',
-        keystone_tenant   => $nova_admin_tenant_name,
+        keystone_tenant   => $services_tenant,
         keystone_user     => 'glance',
         keystone_password => $glance_user_password,
         sql_connection    => $glance_sql_conn,
@@ -159,7 +160,7 @@ node /openstack_controller/ {
         verbose           => $verbose,
         debug             => $debug,
         auth_host         => '127.0.0.1',
-        keystone_tenant   => $nova_admin_tenant_name,
+        keystone_tenant   => $services_tenant,
         keystone_user     => 'glance',
         keystone_password => $glance_user_password,
         sql_connection    => $glance_sql_conn,
@@ -190,6 +191,7 @@ node /openstack_controller/ {
     class { 'nova':
         verbose              => $verbose,
         debug                => $debug,
+        nova_cluster_id      => $nova_cluster_id,
         sql_connection       => $nova_sql_conn,
         rabbit_userid        => $rabbit_user,
         rabbit_password      => $rabbit_password,
@@ -198,7 +200,7 @@ node /openstack_controller/ {
     }
 
     class { 'nova::api':
-        admin_tenant_name => $nova_admin_tenant_name,
+        admin_tenant_name => $services_tenant,
         admin_password    => $nova_user_password,
         enabled_apis      => $enabled_apis,
         # quantum_metadata_proxy_shared_secret => $metadata_shared_secret,
