@@ -74,7 +74,7 @@ class { 'openstack::test_file': }
 class { 'openstack::auth_file':
     admin_password       => $keystone_admin_password,
     keystone_admin_token => $keystone_admin_token,
-    controller_node      => $controller_node_internal,
+    controller_node      => $controller_address,
 }
 
 node /openstack_controller/ {
@@ -154,9 +154,18 @@ node /openstack_controller/ {
 
     class { 'glance::backend::file':
         filesystem_store_datadir => '/var/lib/glance/images/'
+
+        # because this inherits glance::api... not sure if glance::api is still required
+        verbose           => $verbose,
+        debug             => $debug,
+        auth_host         => '127.0.0.1',
+        keystone_tenant   => $services_tenant,
+        keystone_user     => 'glance',
+        keystone_password => $glance_user_password,
+        sql_connection    => $glance_sql_conn,
     }
 
-    class { 'glance::api':
+    class { 'glance::api': # XXX might not be needed???
         verbose           => $verbose,
         debug             => $debug,
         auth_host         => '127.0.0.1',
